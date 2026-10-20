@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#e6e9ed" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%23151c23%27/%3E%3Crect x=%277%27 y=%274%27 width=%2710%27 height=%2716%27 rx=%272.5%27 fill=%27%23ffb21e%27/%3E%3C/svg%3E">
+<title>EVA</title>
+<style>
+:root{--bg:#e6e9ed;--sf:#f7f8fa;--s2:#d9dee3;--tx:#151c23;--t2:#59646f;--ln:#c9d0d7;--am:#ffb21e;--ami:#2b1b00;--ok:#1f9d57;--er:#c8372d;--k1:#fff;--k2:#a9b2bb;--rm:18px;--rl:26px;--ease:cubic-bezier(.2,0,0,1)}
+@media (prefers-color-scheme:dark){:root{--bg:#12161a;--sf:#1d2329;--s2:#2a323a;--tx:#edf0f3;--t2:#96a1ac;--ln:#333c45;--er:#ff8f85;--ok:#4fd88b;--k1:#69757f;--k2:#1f262c}}
+*{box-sizing:border-box;touch-action:pan-x pan-y;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{font:400 16px/1.4 system-ui,Roboto,"Segoe UI",sans-serif;letter-spacing:-.01em;background:var(--bg);color:var(--tx);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--tx);outline-offset:2px}
+.i{width:24px;height:24px;fill:currentColor;flex:none}
+h1,h2,h3,p{margin:0}
+#app{position:fixed;inset:0;display:grid;grid-template-areas:"t" "b" "m" "n";grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr)}
+.top{grid-area:t;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 18px) 20px 10px}
+.tt{min-width:0}
+.top h1{font-size:clamp(26px,4vw,42px);line-height:1.1;font-weight:700;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top p{font-size:15px;color:var(--t2);margin-top:2px;font-variant-numeric:tabular-nums}
+.fade{animation:fade .3s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.chip{display:inline-flex;align-items:center;gap:9px;height:34px;padding:0 14px;border-radius:99px;background:var(--sf);font-size:14px;font-weight:600;flex:none}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--er);transition:background .3s,box-shadow .3s}
+.chip.on i{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}
+.chip.busy i{background:var(--am);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.banner{grid-area:b;display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
+.banner.show{grid-template-rows:1fr}
+.banner>div{overflow:hidden;min-height:0}
+.bi{display:flex;align-items:center;gap:8px;margin:0 16px 8px;padding:4px 4px 4px 16px;background:var(--sf);border-left:4px solid var(--am);border-radius:var(--rm);font-size:14px}
+.bi span{flex:1}
+.tb{color:var(--tx);font-weight:700;padding:10px 16px;border-radius:20px}.tb:active{background:var(--s2)}
+.fb{background:var(--tx);color:var(--bg);font-weight:700;height:48px;padding:0 28px;border-radius:24px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s}
+.fb:active{transform:scale(.97)}.fb:disabled{opacity:.5}
+main{grid-area:m;position:relative}
+.page{position:absolute;inset:0;overflow:auto;opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .2s,transform .3s var(--ease),visibility 0s .3s}
+.page.on{opacity:1;visibility:visible;transform:none;transition:opacity .25s .05s,transform .3s .05s var(--ease),visibility 0s}
+nav{grid-area:n;display:flex;background:var(--sf);padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--ln)}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--t2)}
+.ind{width:60px;height:32px;display:grid;place-items:center;border-radius:12px;transition:background .25s,color .25s}
+nav .on{color:var(--tx)}nav .on .ind{background:var(--tx);color:var(--bg)}
+.brand{display:none;align-items:center}
+.grid{--c:2;--r:4;min-height:100%;padding:6px 16px 16px;display:grid;gap:clamp(10px,1.6vw,22px);grid-template-columns:repeat(var(--c),minmax(0,1fr));grid-template-rows:repeat(var(--r),minmax(104px,1fr))}
+.grid.dis .tile:not(.add){opacity:.5}
+.tile{container-type:size;position:relative;overflow:hidden;border-radius:var(--rm);background:var(--sf);text-align:left;box-shadow:0 1px 2px rgba(20,30,40,.1);transition:background .3s,transform .15s,opacity .3s,box-shadow .3s}
+.tile:active{transform:scale(.97)}
+.tile.enter{animation:in .45s var(--ease) both;animation-delay:calc(var(--k)*45ms)}
+@keyframes in{from{opacity:0;transform:translateY(16px) scale(.96)}}
+.in{width:100%;height:100%;padding:clamp(12px,8cqmin,30px);display:flex;flex-direction:column;justify-content:space-between}
+.hd{display:flex;justify-content:space-between;align-items:flex-start}
+.ic{width:clamp(34px,min(26cqw,26cqh),74px);aspect-ratio:1;border-radius:50%;background:var(--s2);display:grid;place-items:center;transition:background .3s,color .3s}
+.ic .i{width:54%;height:54%}
+.nm{font-size:clamp(15px,min(8.4cqw,10cqh),26px);font-weight:650;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st{font-size:clamp(12px,min(6cqw,7cqh),17px);color:var(--t2)}
+@container (max-height:118px){.st{display:none}}
+.tile.on{background:linear-gradient(155deg,#ffc44d,#ffae14);color:var(--ami);box-shadow:0 8px 26px -10px rgba(255,160,0,.7)}
+.tile.on .ic{background:var(--ami);color:var(--am)}
+.tile.on .st{color:var(--ami);opacity:.75}
+.tile.on .fan{animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rk{width:clamp(26px,min(17cqw,25cqh),62px);aspect-ratio:10/17;border-radius:30%/18%;background:var(--s2);padding:8%;perspective:240px;box-shadow:inset 0 2px 5px rgba(0,0,0,.22);transition:background .3s}
+.rk i{display:block;width:100%;height:100%;border-radius:26%/16%;background:linear-gradient(180deg,var(--k2),var(--k1) 50%,var(--k2));background-size:100% 200%;background-position:0 100%;transform:rotateX(16deg);box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .25s var(--ease),background-position .25s var(--ease)}
+.tile.on .rk{background:rgba(43,27,0,.3)}
+.tile.on .rk i{background-position:0 0;transform:rotateX(-16deg)}
+.tile.pending .rk{animation:pl .7s infinite}
+@keyframes pl{50%{opacity:.5}}
+.lamp{width:12px;height:12px;border-radius:50%;background:var(--s2);margin-top:4px}
+.tile.on .lamp{background:var(--ami)}
+.tile.add{background:transparent;box-shadow:none;border:2px dashed var(--ln);display:flex;align-items:center;justify-content:center;gap:8px;color:var(--t2);font-weight:600}
+.x{z-index:2;position:absolute;bottom:8px;right:8px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:inherit;opacity:.7}
+.x:active{background:rgba(0,0,0,.12)}
+.set{width:100%;min-height:100%;max-width:760px;margin:0 auto;padding:6px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.card{display:flex;align-items:center;gap:16px;padding:20px;border-radius:var(--rl);background:var(--am);color:var(--ami)}
+.card .ic{width:56px;background:var(--ami);color:var(--am)}
+.card b{display:block;font-size:22px;font-weight:700;line-height:1.2}
+.card span{font-size:14px;opacity:.75}
+.list{border-radius:var(--rm);background:var(--sf);overflow:hidden}
+.row{display:flex;align-items:center;gap:16px;width:100%;padding:15px 16px;text-align:left}
+.row+.row{border-top:1px solid var(--ln)}
+.row:active{background:var(--s2)}
+.row .t{flex:1;font-weight:600}.row .t small{display:block;font-weight:400;font-size:14px;color:var(--t2)}
+.row.d{color:var(--er)}.row .go{color:var(--t2)}
+dialog{border:0;padding:0;background:transparent;color:var(--tx);max-width:none;max-height:none}
+dialog::backdrop{background:rgba(0,0,0,.45);animation:fadeb .25s}
+@keyframes fadeb{from{opacity:0}}
+dialog[open]{animation:up .35s var(--ease)}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes pop{from{opacity:0;transform:scale(.92)}}
+#sheet{margin:auto auto 0;width:100%;max-width:560px;background:var(--sf);border-radius:var(--rl) var(--rl) 0 0;padding:12px 24px calc(20px + env(safe-area-inset-bottom,0px))}
+#sheet::before{content:"";display:block;width:32px;height:4px;border-radius:2px;background:var(--t2);opacity:.4;margin:0 auto 16px}
+#sheet h3{font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px}
+#sheet p{color:var(--t2);margin-bottom:8px}
+#sheet input{width:100%;height:56px;padding:0 16px;font:inherit;background:transparent;color:var(--tx);border:1px solid var(--ln);border-radius:12px;-webkit-user-select:text;user-select:text}
+#sheet input:focus{outline:2px solid var(--tx);border-color:var(--tx)}
+.chs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
+.ch{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:12px;border:1px solid var(--ln);font-size:12px;font-weight:600}
+.ch.sel{background:var(--tx);color:var(--bg);border-color:transparent}
+.act{display:flex;justify-content:flex-end;gap:8px;margin-top:24px}
+.snack{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));max-width:480px;margin:0 auto;padding:14px 16px;border-radius:12px;background:var(--tx);color:var(--bg);font-size:14px;transform:translateY(200%);opacity:0;transition:transform .3s var(--ease),opacity .2s;z-index:30;pointer-events:none}
+.snack.show{transform:none;opacity:1}
+#ob{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);transition:opacity .4s,transform .4s var(--ease)}
+#ob.out{opacity:0;transform:scale(1.05);pointer-events:none}
+.track{flex:1;min-height:0;display:flex;transition:transform .45s var(--ease)}
+.slide{flex:0 0 100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 max(32px,calc((100% - 520px)/2));min-width:0}
+.art{position:relative;width:min(220px,34dvh);aspect-ratio:1;margin-bottom:5dvh;display:grid;place-items:center}
+.art b{position:absolute;border-radius:50%;background:var(--am);animation:ring 3s ease-in-out infinite}
+.art b:nth-child(1){inset:0;opacity:.18}.art b:nth-child(2){inset:14%;opacity:.4;animation-delay:.3s}.art b:nth-child(3){inset:28%;animation-delay:.6s}
+.art .i{position:relative;width:26%;height:26%;color:var(--ami)}
+.scan .art b{animation-duration:1.2s}
+@keyframes ring{50%{transform:scale(1.07)}}
+.slide h2{font-size:clamp(24px,4.2dvh,32px);line-height:1.25;font-weight:700;letter-spacing:-.02em;margin-bottom:12px}
+.slide p{color:var(--t2);max-width:320px}
+.ctl{display:flex;align-items:center;justify-content:space-between;padding:12px max(24px,calc((100% - 520px)/2)) 24px;width:100%}
+.dots{display:flex;gap:8px}
+.dots i{height:8px;width:8px;border-radius:4px;background:var(--s2);transition:width .3s var(--ease),background .3s}
+.dots i.on{width:24px;background:var(--tx)}
+#obMsg{min-height:20px;text-align:center;font-size:14px;color:var(--er);padding:0 24px}
+.spin{width:18px;height:18px;border:3px solid var(--bg);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@media (hover:hover){.tile:not(.add):hover{transform:translateY(-2px)}.row:hover{background:var(--s2)}}
+@media (min-aspect-ratio:11/10) and (min-width:560px){.grid{--c:4;--r:2}}
+@media (max-height:520px){.top{padding:8px 20px}.top h1{font-size:22px}.top p{display:none}.chip{height:30px}.grid{gap:10px;padding-bottom:12px}}
+@media (min-width:600px),(orientation:landscape) and (max-height:520px){
+ #app{grid-template-areas:"n t" "n b" "n m";grid-template-columns:84px minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+ nav{flex-direction:column;gap:18px;padding:16px 8px;border-top:0;border-right:1px solid var(--ln)}
+ .brand{display:flex;justify-content:center}.brand span{display:none}.brand .i{width:32px;height:32px}
+ nav button:first-of-type{margin-top:auto}nav button:last-of-type{margin-bottom:auto}
+ .top{padding-left:28px;padding-right:28px}.banner .bi{margin-left:28px;margin-right:28px}
+ .grid,.set{padding-left:28px;padding-right:28px}
+ .snack{left:100px;bottom:24px}
+}
+@media (min-width:700px) and (min-height:560px){
+ .top{padding-top:calc(env(safe-area-inset-top,0px) + 32px);padding-bottom:16px}
+ .chip{height:40px;font-size:15px}.top p{font-size:17px}
+ .grid,.set{padding-top:8px;padding-bottom:28px}
+ #sheet{margin:auto;border-radius:var(--rl);max-width:480px;padding:28px}
+ #sheet::before{display:none}dialog[open]{animation:pop .3s var(--ease)}
+ .art{width:min(320px,38dvh)}.slide p{font-size:18px;max-width:420px}
+}
+@media (min-width:1100px) and (min-height:560px){
+ #app{grid-template-columns:250px minmax(0,1fr)}
+ nav{padding:28px 16px;gap:8px}
+ .brand{justify-content:flex-start;gap:10px;padding:0 12px;margin-bottom:28px;font-size:26px;font-weight:800;letter-spacing:-.03em}.brand span{display:inline}
+ nav button{flex:none;flex-direction:row;gap:14px;height:52px;padding:0 14px;border-radius:16px;font-size:16px}
+ nav .ind{width:24px;height:24px;background:none!important;color:inherit!important}
+ nav .on{background:var(--tx);color:var(--bg)}
+ nav button:first-of-type{margin-top:0}
+ .top,.grid,.set{padding-left:48px;padding-right:48px}.banner .bi{margin-left:48px;margin-right:48px}
+ .snack{left:266px}
+}
+@media (min-width:900px) and (min-aspect-ratio:11/10) and (min-height:520px){
+ .set{max-width:1100px;display:grid;grid-template-columns:minmax(260px,.8fr) 1.2fr;align-content:center;align-items:start;gap:16px}
+ .card{grid-row:1/3;flex-direction:column;align-items:flex-start;justify-content:flex-end;min-height:min(360px,50vh);padding:28px}
+}
+@media (min-width:700px) and (min-aspect-ratio:1/1),(orientation:landscape) and (max-height:520px){
+ .slide{flex-direction:row;gap:clamp(24px,6vw,96px);text-align:left;padding:0 max(32px,calc((100% - 1000px)/2))}.tx2{min-width:0;flex:1}
+ .art{width:min(320px,48dvh);margin:0;flex:none}
+ .slide h2{font-size:clamp(28px,6dvh,52px)}.slide p{max-width:440px}.ctl{padding:12px max(24px,calc((100% - 1000px)/2)) 24px}
+}
+@media (prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></symbol>
+<symbol id="i-fan" viewBox="0 0 24 24"><path d="M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm.5-9C17 2 17.11 5.57 14.75 6.75c-.99.49-1.43 1.54-1.62 2.47.48.2.9.51 1.22.91 3.7-2 7.68-1.21 7.68 2.37 0 4.5-3.57 4.6-4.75 2.23-.5-.99-1.56-1.43-2.49-1.62-.2.48-.51.89-.91 1.23 1.99 3.69 1.2 7.66-2.38 7.66-4.5 0-4.59-3.58-2.23-4.76.98-.49 1.42-1.53 1.62-2.45-.49-.2-.92-.52-1.24-.92C5.96 15.85 2 15.07 2 11.5c0-4.5 3.56-4.61 4.74-2.24.5.99 1.55 1.43 2.48 1.62.19-.48.51-.91.91-1.23C8.15 5.96 8.94 2 12.5 2z"/></symbol>
+<symbol id="i-outlet" viewBox="0 0 24 24"><path d="M16.01 7L16 3h-2v4h-4V3H8v4h-.01C7 6.99 6 7.99 6 8.99v5.49L9.5 18v3h5v-3l3.5-3.51v-5.5c0-1-1-2-1.99-1.99z"/></symbol>
+<symbol id="i-ac" viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></symbol>
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3zm0 2a1 1 0 0 0-1 1v6h12V5a1 1 0 0 0-1-1H7z"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+<symbol id="i-scenes" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></symbol>
+<symbol id="i-set" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+<symbol id="i-del" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+<symbol id="i-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+<symbol id="i-bt" viewBox="0 0 24 24"><path d="M17.71 7.71L12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></symbol>
+<symbol id="i-off" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></symbol>
+<symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+</defs></svg>
+
+<div id="app">
+  <header class="top">
+    <div class="tt"><h1 id="title"></h1><p id="sub"></p></div>
+    <div id="chip" class="chip off"><i></i><span id="chipText">Not connected</span></div>
+  </header>
+  <div id="banner" class="banner"><div><div class="bi"><span id="bannerText"></span><button id="bannerBtn" class="tb">Choose device</button></div></div></div>
+  <main>
+    <section id="p-home" class="page on"><div id="relays" class="grid"></div></section>
+    <section id="p-scenes" class="page"><div id="scenes" class="grid"></div></section>
+    <section id="p-set" class="page"><div class="set">
+      <div class="card"><div class="ic"><svg class="i"><use href="#i-bt"/></svg></div><div><b id="cardName"></b><span id="cardSt"></span></div></div>
+      <div class="list">
+        <button class="row" id="sRename"><svg class="i"><use href="#i-edit"/></svg><div class="t">Rename device<small>Saved on the EVA device</small></div><svg class="i go"><use href="#i-chev"/></svg></button>
+        <button class="row" id="sRelays"><svg class="i"><use href="#i-bulb"/></svg><div class="t">Customize relays<small>Name each one and pick an icon</small></div><svg class="i go"><use href="#i-chev"/></svg></button>
+        <button class="row" id="sVoice"><svg class="i"><use href="#i-mic"/></svg><div class="t">Voice control<small>How to use Hey, EVA</small></div><svg class="i go"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="list"><button class="row d" id="sForget"><svg class="i"><use href="#i-del"/></svg><div class="t">Forget device<small>Pair a different EVA</small></div></button></div>
+    </div></section>
+  </main>
+  <nav id="nav"><div class="brand"><svg class="i"><use href="#i-logo"/></svg><span>EVA</span></div>
+    <button data-t="home" class="on"><span class="ind"><svg class="i"><use href="#i-home"/></svg></span>Home</button>
+    <button data-t="scenes"><span class="ind"><svg class="i"><use href="#i-scenes"/></svg></span>Scenes</button>
+    <button data-t="set"><span class="ind"><svg class="i"><use href="#i-set"/></svg></span>Settings</button>
+  </nav>
+</div>
+
+<div id="ob">
+  <div class="track" id="track">
+    <div class="slide"><div class="art"><b></b><b></b><b></b><svg class="i"><use href="#i-bolt"/></svg></div><div class="tx2"><h2>Meet EVA</h2><p>Switch your lights and fans from your phone. Voice control works too, and nothing needs the internet.</p></div></div>
+    <div class="slide"><div class="art"><b></b><b></b><b></b><svg class="i"><use href="#i-home"/></svg></div><div class="tx2"><h2>Get ready</h2><p>Power on your EVA device and stay within a few meters of it while you connect.</p></div></div>
+    <div class="slide"><div class="art"><b></b><b></b><b></b><svg class="i"><use href="#i-bt"/></svg></div><div class="tx2"><h2>Connect once</h2><p>Tap Find device, choose EVA from the list, and allow Bluetooth. After this it reconnects by itself.</p></div></div>
+  </div>
+  <p id="obMsg"></p>
+  <div class="ctl"><div class="dots" id="dots"><i class="on"></i><i></i><i></i></div><button id="obBtn" class="fb">Next</button></div>
+</div>
+
+<dialog id="sheet"><h3 id="shT"></h3><div id="shB"></div><div class="act" id="shA"></div></dialog>
+<div id="snack" class="snack" role="status"></div>
+
+<script>
+// ---- BLE contract (the ESP32 must use the same UUIDs) ----
+const SVC='e7a10001-6b1c-4c2e-9d3a-5f0a7e5a0001';
+const CMD='e7a10002-6b1c-4c2e-9d3a-5f0a7e5a0001';   // write: 1 byte bitmask, bit0-7 = relay 1-8 (1 = ON)
+const STATE='e7a10003-6b1c-4c2e-9d3a-5f0a7e5a0001'; // read + notify: same bitmask
+const NAME='e7a10004-6b1c-4c2e-9d3a-5f0a7e5a0001';  // read + write: UTF-8 device name
+const N=8,KEY='eva.deviceId',ICONS={bulb:'Light',fan:'Fan',outlet:'Outlet',ac:'Cooling'};
+
+const $=id=>document.getElementById(id), $$=s=>document.querySelectorAll(s);
+const ic=(n,c='')=>`<svg class="i ${c}"><use href="#i-${n}"/></svg>`;
+const st={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
+const cfg=st.get('eva.cfg',{});
+cfg.r=cfg.r||Array.from({length:N},(_,i)=>({n:'Relay '+(i+1),i:'bulb'}));
+cfg.s=cfg.s||[];
+const saveCfg=()=>st.set('eva.cfg',cfg);
+const pop=m=>{let c=0;for(let i=0;i<N;i++)c+=m>>i&1;return c};
+
+let dev,cmdC,nameC,mask=0,manual=false,retrying=false,connected=false,devName=st.get('eva.name','EVA'),tab='home';
+
+/* ---------- UI helpers ---------- */
+function snack(t){const e=$('snack');e.textContent=t;e.classList.add('show');clearTimeout(snack.t);snack.t=setTimeout(()=>e.classList.remove('show'),2800)}
+function sheet(t,body,acts){
+  $('shT').textContent=t;$('shB').innerHTML=body;$('shA').innerHTML='';
+  acts.forEach(([l,f,p])=>{const b=document.createElement('button');b.className=p?'fb':'tb';b.textContent=l;b.onclick=async()=>{if(await f()!==false)$('sheet').close()};$('shA').appendChild(b)});
+  $('sheet').showModal();
+}
+$('sheet').addEventListener('click',e=>{if(e.target===$('sheet')){const r=$('sheet').getBoundingClientRect();if(e.clientY<r.top)$('sheet').close()}});
+$('shB').onclick=e=>{const c=e.target.closest('.ch');if(c)$$('#shB .ch').forEach(x=>x.classList.toggle('sel',x===c))};
+function head(){
+  const n=pop(mask);
+  const h={home:[devName,connected?(n?`${n} of ${N} on`:'Everything is off'):'Not connected'],scenes:['Scenes','Tap to apply a setup'],set:['Settings','Your EVA and this app']}[tab];
+  if($('title').textContent!==h[0]){$('title').textContent=h[0];$('title').classList.remove('fade');void $('title').offsetWidth;$('title').classList.add('fade')}
+  $('sub').textContent=h[1];
+  $('cardName').textContent=devName;$('cardSt').textContent=connected?'Connected':'Not connected';
+}
+function go(t){
+  tab=t;
+  $$('.page').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  $$('#nav button').forEach(b=>{const a=b.dataset.t===t;b.classList.toggle('on',a);b.setAttribute('aria-current',a?'page':'false')});
+  head();
+}
+$$('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+
+/* ---------- Home: relays ---------- */
+function buildRelays(){
+  $('relays').innerHTML='';
+  cfg.r.forEach((r,i)=>{
+    const b=document.createElement('button');
+    b.className='tile enter';b.id='r'+i;b.style.setProperty('--k',i);b.setAttribute('role','switch');
+    b.innerHTML=`<div class="in"><div class="hd"><div class="ic">${ic(r.i,r.i==='fan'?'fan':'')}</div><div class="rk"><i></i></div></div><div><div class="nm"></div><div class="st">Off</div></div></div>`;
+    b.querySelector('.nm').textContent=r.n;
+    let lp,fired=false;
+    b.addEventListener('pointerdown',()=>{fired=false;lp=setTimeout(()=>{fired=true;navigator.vibrate?.(20);editRelay(i)},550)});
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(lp)));
+    b.oncontextmenu=e=>e.preventDefault();
+    b.onclick=()=>{if(fired){fired=false;return}navigator.vibrate?.(10);b.classList.add('pending');setTimeout(()=>b.classList.remove('pending'),1500);write(mask^(1<<i))};
+    $('relays').appendChild(b);
+  });
+}
+function render(){
+  for(let i=0;i<N;i++){
+    const on=!!(mask>>i&1),b=$('r'+i);
+    b.classList.remove('pending');b.classList.toggle('on',on);b.setAttribute('aria-checked',on);
+    b.querySelector('.st').textContent=on?'On':'Off';
+  }
+  $('relays').classList.toggle('dis',!connected);
+  head();updScenes();
+}
+function editRelay(i){
+  const r=cfg.r[i];
+  sheet('Relay '+(i+1),`<input id="in" maxlength="14" aria-label="Name" value="">`+`<div class="chs">${Object.entries(ICONS).map(([k,l])=>`<button class="ch${r.i===k?' sel':''}" data-k="${k}">${ic(k)}<span>${l}</span></button>`).join('')}</div>`,
+   [['Cancel',()=>{}],['Save',()=>{const v=$('in').value.trim()||'Relay '+(i+1);cfg.r[i]={n:v,i:$('shB').querySelector('.ch.sel')?.dataset.k||'bulb'};saveCfg();buildRelays();render();},1]]);
+  $('in').value=r.n;
+}
+
+/* ---------- Scenes ---------- */
+const BUILT=[{id:'on',n:'All on',m:255,ic:'bolt'},{id:'off',n:'All off',m:0,ic:'off'}];
+function buildScenes(){
+  const g=$('scenes');g.innerHTML='';
+  [...BUILT,...cfg.s.map(s=>({...s,ic:'scenes',c:1}))].forEach((s,k)=>{
+    const b=document.createElement('button');
+    b.className='tile enter';b.dataset.m=s.m;b.style.setProperty('--k',k);
+    b.innerHTML=`<div class="in"><div class="hd"><div class="ic">${ic(s.ic)}</div><i class="lamp"></i></div><div><div class="nm"></div><div class="st">${s.m===255?'Every relay':s.m===0?'Every relay off':pop(s.m)+' on'}</div></div></div>`;
+    b.querySelector('.nm').textContent=s.n;
+    b.onclick=()=>{navigator.vibrate?.(10);write(s.m)};
+    if(s.c){const x=document.createElement('span');x.className='x';x.innerHTML=ic('del');x.setAttribute('role','button');x.setAttribute('aria-label','Delete '+s.n);
+      x.onclick=e=>{e.stopPropagation();cfg.s=cfg.s.filter(q=>q.id!==s.id);saveCfg();buildScenes();updScenes();snack('Scene deleted')};b.appendChild(x)}
+    g.appendChild(b);
+  });
+  if(cfg.s.length<5){
+    const a=document.createElement('button');a.className='tile add enter';a.style.setProperty('--k',8);
+    a.innerHTML=ic('add')+'<span>Save current</span>';
+    a.onclick=()=>sheet('Save scene',`<p>Saves which relays are on right now.</p><input id="in" maxlength="14" placeholder="Movie night" aria-label="Scene name">`,
+      [['Cancel',()=>{}],['Save',()=>{const v=$('in').value.trim();if(!v){return false}cfg.s.push({id:Date.now(),n:v,m:mask});saveCfg();buildScenes();updScenes();}, 1]]);
+    g.appendChild(a);
+  }
+}
+function updScenes(){$$('#scenes .tile[data-m]').forEach(t=>t.classList.toggle('on',connected&&+t.dataset.m===mask));$('scenes').classList.toggle('dis',!connected)}
+
+/* ---------- Bluetooth ---------- */
+async function write(v){
+  if(!cmdC||!dev?.gatt.connected){snack('Not connected to your device');$$('.pending').forEach(e=>e.classList.remove('pending'));return}
+  try{await cmdC.writeValueWithResponse(Uint8Array.of(v&255))}catch{snack('Command failed. Try again.');$$('.pending').forEach(e=>e.classList.remove('pending'))}
+}
+function status(s,t){
+  connected=s==='on';
+  $('chip').className='chip '+s;$('chipText').textContent=t;
+  $('banner').classList.toggle('show',!connected&&$('ob').hidden);
+  $('bannerText').textContent=s==='busy'?'Looking for '+devName+'…':'Can’t reach '+devName;
+}
+async function link(d){
+  dev=d;
+  d.removeEventListener('gattserverdisconnected',onDisc);d.addEventListener('gattserverdisconnected',onDisc);
+  status('busy','Connecting…');
+  const srv=await d.gatt.connect(),svc=await srv.getPrimaryService(SVC);
+  cmdC=await svc.getCharacteristic(CMD);nameC=await svc.getCharacteristic(NAME);
+  const s=await svc.getCharacteristic(STATE);
+  mask=(await s.readValue()).getUint8(0);
+  s.addEventListener('characteristicvaluechanged',e=>{mask=e.target.value.getUint8(0);render()});
+  await s.startNotifications();
+  try{devName=new TextDecoder().decode(await nameC.readValue())||d.name||'EVA'}catch{devName=d.name||'EVA'}
+  st.set('eva.name',devName);localStorage.setItem(KEY,d.id);
+  closeOb();status('on','Connected');render();
+  if(!st.get('eva.tip',0)){st.set('eva.tip',1);setTimeout(()=>snack('Tip: press and hold a relay to rename it'),900)}
+}
+function onDisc(){status('busy','Reconnecting…');if(!manual)reconnect()}
+async function reconnect(){
+  if(retrying)return;retrying=true;render();
+  for(let w=1500;!manual;w=Math.min(w*1.5,10000)){
+    try{await link(dev);break}catch{status('busy','Reconnecting…');await new Promise(r=>setTimeout(r,w))}
+  }
+  retrying=false;
+}
+async function pair(){
+  const fromOb=!$('ob').hidden;
+  if(fromOb){$('obMsg').textContent='';$('obBtn').disabled=true;$('obBtn').innerHTML='<i class="spin"></i>Connecting';$('ob').classList.add('scan')}
+  try{
+    const d=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}]});
+    manual=false;retrying=false;await link(d);
+  }catch(e){
+    if(e.name!=='NotFoundError'&&fromOb)$('obMsg').textContent='Couldn’t connect. Make sure EVA is on and nearby, then try again.';
+    status('off','Not connected');
+  }
+  $('obBtn').disabled=false;$('obBtn').textContent='Find device';$('ob').classList.remove('scan');
+}
+async function restore(){
+  const id=localStorage.getItem(KEY);
+  if(!id||!navigator.bluetooth.getDevices)return;
+  try{const d=(await navigator.bluetooth.getDevices()).find(x=>x.id===id);if(d){dev=d;manual=false;reconnect()}}catch{}
+}
+
+/* ---------- Settings ---------- */
+$('sRename').onclick=()=>{
+  if(!connected)return snack('Connect to your device first');
+  sheet('Rename device',`<input id="in" maxlength="20" aria-label="Device name" value="">`,
+   [['Cancel',()=>{}],['Save',async()=>{const v=$('in').value.trim();if(!v)return false;
+     try{await nameC.writeValueWithResponse(new TextEncoder().encode(v));devName=v;st.set('eva.name',v);head();snack('Device renamed')}catch{snack('Couldn’t rename. Try again.')}},1]]);
+  $('in').value=devName;
+};
+$('sRelays').onclick=()=>{go('home');setTimeout(()=>snack('Press and hold any relay to edit it'),350)};
+$('sVoice').onclick=()=>sheet('Voice control',`<p>1. Say “Hey, EVA”.</p><p>2. Wait for EVA to answer.</p><p>3. Say a supported command, like switching a relay or turning everything on or off.</p><p>Changes made by voice show up here right away.</p>`,[['Got it',()=>{},1]]);
+$('sForget').onclick=()=>sheet('Forget this device?',`<p>You’ll need to pair again before you can control it.</p>`,[['Cancel',()=>{}],['Forget',()=>{
+  manual=true;try{dev?.gatt.disconnect();dev?.forget?.()}catch{}
+  st.del(KEY);dev=null;mask=0;connected=false;go('home');status('off','Not connected');openOb();render();},1]]);
+$('bannerBtn').onclick=()=>{manual=true;pair()};
+
+/* ---------- Onboarding ---------- */
+let slide=0;
+function obGo(i){
+  slide=Math.max(0,Math.min(2,i));
+  $('track').style.transform=`translateX(${-slide*100}%)`;
+  [...$('dots').children].forEach((d,k)=>d.classList.toggle('on',k===slide));
+  $('obBtn').textContent=slide<2?'Next':'Find device';
+}
+function openOb(){$('ob').hidden=false;requestAnimationFrame(()=>$('ob').classList.remove('out'));obGo(0);status('off','Not connected')}
+function closeOb(){$('ob').classList.add('out');setTimeout(()=>{$('ob').hidden=true},400);$('banner').classList.remove('show')}
+$('obBtn').onclick=()=>slide<2?obGo(slide+1):pair();
+$('dots').onclick=e=>{const k=[...$('dots').children].indexOf(e.target);if(k>=0)obGo(k)};
+let sx=null;
+$('ob').addEventListener('pointerdown',e=>sx=e.clientX);
+$('ob').addEventListener('pointerup',e=>{if(sx!==null&&Math.abs(e.clientX-sx)>50)obGo(slide+(e.clientX<sx?1:-1));sx=null});
+
+/* ---------- No zoom ---------- */
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+['gesturestart','gesturechange','dblclick'].forEach(e=>document.addEventListener(e,ev=>ev.preventDefault()));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].includes(e.key))e.preventDefault()});
+
+/* ---------- Start ---------- */
+buildRelays();buildScenes();go('home');render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+if(!navigator.bluetooth){
+  $('obMsg').textContent='Bluetooth isn’t available here. Open this page in Chrome on an Android phone.';$('obBtn').disabled=true;
+}else if(localStorage.getItem(KEY)){
+  $('ob').hidden=true;status('busy','Connecting…');restore().then(()=>{if(!dev)status('off','Not connected')});
+}
+</script>
+</body>
+</html>
