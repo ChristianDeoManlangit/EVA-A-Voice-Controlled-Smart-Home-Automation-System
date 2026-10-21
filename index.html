@@ -242,7 +242,7 @@ cfg.s=cfg.s||[];
 const saveCfg=()=>st.set('eva.cfg',cfg);
 const pop=m=>{let c=0;for(let i=0;i<N;i++)c+=m>>i&1;return c};
 
-let dev,cmdC,nameC,mask=0,manual=false,retrying=false,connected=false,devName=st.get('eva.name','EVA'),tab='home';
+let dev,cmdC,nameC,stC,idleT,idle=false,mask=0,manual=false,retrying=false,connected=false,devName=st.get('eva.name','EVA'),tab='home';
 
 /* ---------- UI helpers ---------- */
 function snack(t){const e=$('snack');e.textContent=t;e.classList.add('show');clearTimeout(snack.t);snack.t=setTimeout(()=>e.classList.remove('show'),2800)}
@@ -280,7 +280,7 @@ function buildRelays(){
     b.addEventListener('pointerdown',()=>{fired=false;lp=setTimeout(()=>{fired=true;navigator.vibrate?.(20);editRelay(i)},550)});
     ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(lp)));
     b.oncontextmenu=e=>e.preventDefault();
-    b.onclick=()=>{if(fired){fired=false;return}navigator.vibrate?.(10);b.classList.add('pending');setTimeout(()=>b.classList.remove('pending'),1500);write(mask^(1<<i))};
+    b.onclick=()=>{if(fired){fired=false;return}navigator.vibrate?.(10);b.classList.add('pending');setTimeout(()=>b.classList.remove('pending'),1500);toggle(i)};
     $('relays').appendChild(b);
   });
 }
@@ -325,6 +325,11 @@ function buildScenes(){
 function updScenes(){$$('#scenes .tile[data-m]').forEach(t=>t.classList.toggle('on',connected&&+t.dataset.m===mask));$('scenes').classList.toggle('dis',!connected)}
 
 /* ---------- Bluetooth ---------- */
+// Read the live state first so a toggle never undoes a change another phone just made
+async function toggle(i){
+  try{if(stC&&dev?.gatt.connected)mask=(await stC.readValue()).getUint8(0)}catch{}
+  write(mask^(1<<i));
+}
 async function write(v){
   if(!cmdC||!dev?.gatt.connected){snack('Not connected to your device');$$('.pending').forEach(e=>e.classList.remove('pending'));return}
   try{await cmdC.writeValueWithResponse(Uint8Array.of(v&255))}catch{snack('Command failed. Try again.');$$('.pending').forEach(e=>e.classList.remove('pending'))}
@@ -336,12 +341,12 @@ function status(s,t){
   $('bannerText').textContent=s==='busy'?'Looking for '+devName+'…':'Can’t reach '+devName;
 }
 async function link(d){
-  dev=d;
+  dev=d;idle=false;
   d.removeEventListener('gattserverdisconnected',onDisc);d.addEventListener('gattserverdisconnected',onDisc);
   status('busy','Connecting…');
   const srv=await d.gatt.connect(),svc=await srv.getPrimaryService(SVC);
   cmdC=await svc.getCharacteristic(CMD);nameC=await svc.getCharacteristic(NAME);
-  const s=await svc.getCharacteristic(STATE);
+  const s=stC=await svc.getCharacteristic(STATE);
   mask=(await s.readValue()).getUint8(0);
   s.addEventListener('characteristicvaluechanged',e=>{mask=e.target.value.getUint8(0);render()});
   await s.startNotifications();
@@ -353,8 +358,9 @@ async function link(d){
 function onDisc(){status('busy','Reconnecting…');if(!manual)reconnect()}
 async function reconnect(){
   if(retrying)return;retrying=true;render();
+  let tries=0;
   for(let w=1500;!manual;w=Math.min(w*1.5,10000)){
-    try{await link(dev);break}catch{status('busy','Reconnecting…');await new Promise(r=>setTimeout(r,w))}
+    try{await link(dev);break}catch{tries++;status('busy',tries>2?'Busy, retrying…':'Reconnecting…');await new Promise(r=>setTimeout(r,w))}
   }
   retrying=false;
 }
@@ -406,6 +412,22 @@ $('dots').onclick=e=>{const k=[...$('dots').children].indexOf(e.target);if(k>=0)
 let sx=null;
 $('ob').addEventListener('pointerdown',e=>sx=e.clientX);
 $('ob').addEventListener('pointerup',e=>{if(sx!==null&&Math.abs(e.clientX-sx)>50)obGo(slide+(e.clientX<sx?1:-1));sx=null});
+
+/* ---------- Free the BLE slot when the app is in the background ---------- */
+// EVA accepts only a few phones at once, so an idle phone should not hold a slot
+const IDLE_MS=15000;
+document.addEventListener('visibilitychange',()=>{
+  clearTimeout(idleT);
+  if(document.hidden){
+    idleT=setTimeout(()=>{
+      if(!dev||!(connected||retrying))return;
+      manual=true;idle=true;
+      try{dev.gatt.disconnect()}catch{}
+    },IDLE_MS);
+  }else if(idle&&dev){
+    idle=false;manual=false;reconnect();
+  }
+});
 
 /* ---------- No zoom ---------- */
 document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
