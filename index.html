@@ -48,6 +48,7 @@ nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
 nav .on{color:var(--tx)}nav .on .ind{background:var(--tx);color:var(--bg)}
 .brand{display:none;align-items:center}
 .grid{--c:2;--r:4;min-height:100%;padding:6px 16px 16px;display:grid;gap:clamp(10px,1.6vw,22px);grid-template-columns:repeat(var(--c),minmax(0,1fr));grid-template-rows:repeat(var(--r),minmax(104px,1fr))}
+#relays{--r:2}
 .grid.dis .tile:not(.add){opacity:.5}
 .tile{container-type:size;position:relative;overflow:hidden;border-radius:var(--rm);background:var(--sf);text-align:left;box-shadow:0 1px 2px rgba(20,30,40,.1);transition:background .3s,transform .15s,opacity .3s,box-shadow .3s}
 .tile:active{transform:scale(.97)}
@@ -124,7 +125,7 @@ dialog[open]{animation:up .35s var(--ease)}
 #obMsg{min-height:20px;text-align:center;font-size:14px;color:var(--er);padding:0 24px}
 .spin{width:18px;height:18px;border:3px solid var(--bg);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 @media (hover:hover){.tile:not(.add):hover{transform:translateY(-2px)}.row:hover{background:var(--s2)}}
-@media (min-aspect-ratio:11/10) and (min-width:560px){.grid{--c:4;--r:2}}
+@media (min-aspect-ratio:11/10) and (min-width:560px){.grid{--c:4;--r:2}#relays{--r:1}}
 @media (max-height:520px){.top{padding:8px 20px}.top h1{font-size:22px}.top p{display:none}.chip{height:30px}.grid{gap:10px;padding-bottom:12px}}
 @media (min-width:600px),(orientation:landscape) and (max-height:520px){
  #app{grid-template-areas:"n t" "n b" "n m";grid-template-columns:84px minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
@@ -228,17 +229,17 @@ dialog[open]{animation:up .35s var(--ease)}
 <script>
 // ---- BLE contract (the ESP32 must use the same UUIDs) ----
 const SVC='e7a10001-6b1c-4c2e-9d3a-5f0a7e5a0001';
-const CMD='e7a10002-6b1c-4c2e-9d3a-5f0a7e5a0001';   // write: 1 byte bitmask, bit0-7 = relay 1-8 (1 = ON)
+const CMD='e7a10002-6b1c-4c2e-9d3a-5f0a7e5a0001';   // write: 1 byte bitmask, bit0-3 = relay 1-4 (1 = ON)
 const STATE='e7a10003-6b1c-4c2e-9d3a-5f0a7e5a0001'; // read + notify: same bitmask
 const NAME='e7a10004-6b1c-4c2e-9d3a-5f0a7e5a0001';  // read + write: UTF-8 device name
-const N=8,KEY='eva.deviceId',ICONS={bulb:'Light',fan:'Fan',outlet:'Outlet',ac:'Cooling'};
+const N=4,ALL=(1<<N)-1,KEY='eva.deviceId',ICONS={bulb:'Light',fan:'Fan',outlet:'Outlet',ac:'Cooling'};
 
 const $=id=>document.getElementById(id), $$=s=>document.querySelectorAll(s);
 const ic=(n,c='')=>`<svg class="i ${c}"><use href="#i-${n}"/></svg>`;
 const st={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
 const cfg=st.get('eva.cfg',{});
-cfg.r=cfg.r||Array.from({length:N},(_,i)=>({n:'Relay '+(i+1),i:'bulb'}));
-cfg.s=cfg.s||[];
+cfg.r=(cfg.r||Array.from({length:N},(_,i)=>({n:'Relay '+(i+1),i:'bulb'}))).slice(0,N);
+cfg.s=(cfg.s||[]).map(s=>({...s,m:s.m&ALL}));
 const saveCfg=()=>st.set('eva.cfg',cfg);
 const pop=m=>{let c=0;for(let i=0;i<N;i++)c+=m>>i&1;return c};
 
@@ -301,13 +302,13 @@ function editRelay(i){
 }
 
 /* ---------- Scenes ---------- */
-const BUILT=[{id:'on',n:'All on',m:255,ic:'bolt'},{id:'off',n:'All off',m:0,ic:'off'}];
+const BUILT=[{id:'on',n:'All on',m:ALL,ic:'bolt'},{id:'off',n:'All off',m:0,ic:'off'}];
 function buildScenes(){
   const g=$('scenes');g.innerHTML='';
   [...BUILT,...cfg.s.map(s=>({...s,ic:'scenes',c:1}))].forEach((s,k)=>{
     const b=document.createElement('button');
     b.className='tile enter';b.dataset.m=s.m;b.style.setProperty('--k',k);
-    b.innerHTML=`<div class="in"><div class="hd"><div class="ic">${ic(s.ic)}</div><i class="lamp"></i></div><div><div class="nm"></div><div class="st">${s.m===255?'Every relay':s.m===0?'Every relay off':pop(s.m)+' on'}</div></div></div>`;
+    b.innerHTML=`<div class="in"><div class="hd"><div class="ic">${ic(s.ic)}</div><i class="lamp"></i></div><div><div class="nm"></div><div class="st">${s.m===ALL?'Every relay':s.m===0?'Every relay off':pop(s.m)+' on'}</div></div></div>`;
     b.querySelector('.nm').textContent=s.n;
     b.onclick=()=>{navigator.vibrate?.(10);write(s.m)};
     if(s.c){const x=document.createElement('span');x.className='x';x.innerHTML=ic('del');x.setAttribute('role','button');x.setAttribute('aria-label','Delete '+s.n);
@@ -318,11 +319,11 @@ function buildScenes(){
     const a=document.createElement('button');a.className='tile add enter';a.style.setProperty('--k',8);
     a.innerHTML=ic('add')+'<span>Save current</span>';
     a.onclick=()=>sheet('Save scene',`<p>Saves which relays are on right now.</p><input id="in" maxlength="14" placeholder="Movie night" aria-label="Scene name">`,
-      [['Cancel',()=>{}],['Save',()=>{const v=$('in').value.trim();if(!v){return false}cfg.s.push({id:Date.now(),n:v,m:mask});saveCfg();buildScenes();updScenes();}, 1]]);
+      [['Cancel',()=>{}],['Save',()=>{const v=$('in').value.trim();if(!v){return false}cfg.s.push({id:Date.now(),n:v,m:mask&ALL});saveCfg();buildScenes();updScenes();}, 1]]);
     g.appendChild(a);
   }
 }
-function updScenes(){$$('#scenes .tile[data-m]').forEach(t=>t.classList.toggle('on',connected&&+t.dataset.m===mask));$('scenes').classList.toggle('dis',!connected)}
+function updScenes(){$$('#scenes .tile[data-m]').forEach(t=>t.classList.toggle('on',connected&&+t.dataset.m===(mask&ALL)));$('scenes').classList.toggle('dis',!connected)}
 
 /* ---------- Bluetooth ---------- */
 // Read the live state first so a toggle never undoes a change another phone just made
@@ -332,7 +333,7 @@ async function toggle(i){
 }
 async function write(v){
   if(!cmdC||!dev?.gatt.connected){snack('Not connected to your device');$$('.pending').forEach(e=>e.classList.remove('pending'));return}
-  try{await cmdC.writeValueWithResponse(Uint8Array.of(v&255))}catch{snack('Command failed. Try again.');$$('.pending').forEach(e=>e.classList.remove('pending'))}
+  try{await cmdC.writeValueWithResponse(Uint8Array.of(v&ALL))}catch{snack('Command failed. Try again.');$$('.pending').forEach(e=>e.classList.remove('pending'))}
 }
 function status(s,t){
   connected=s==='on';
@@ -347,8 +348,8 @@ async function link(d){
   const srv=await d.gatt.connect(),svc=await srv.getPrimaryService(SVC);
   cmdC=await svc.getCharacteristic(CMD);nameC=await svc.getCharacteristic(NAME);
   const s=stC=await svc.getCharacteristic(STATE);
-  mask=(await s.readValue()).getUint8(0);
-  s.addEventListener('characteristicvaluechanged',e=>{mask=e.target.value.getUint8(0);render()});
+  mask=(await s.readValue()).getUint8(0)&ALL;
+  s.addEventListener('characteristicvaluechanged',e=>{mask=e.target.value.getUint8(0)&ALL;render()});
   await s.startNotifications();
   try{devName=new TextDecoder().decode(await nameC.readValue())||d.name||'EVA'}catch{devName=d.name||'EVA'}
   st.set('eva.name',devName);localStorage.setItem(KEY,d.id);
